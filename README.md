@@ -195,7 +195,7 @@ The container can act as a DoT server, providing secure DNS resolution over TLS 
 ```yaml
 services:
   unbound:
-    build: src/unbound
+    build: .
     ports:
       - "53:53/udp"
       - "853:853/tcp"  # DoT server port
@@ -345,7 +345,7 @@ sudo update-ca-trust
 ```yaml
 services:
   unbound:
-    build: src/unbound
+    build: .
     ports:
       - "53:53/udp"
       - "853:853/tcp"
@@ -541,7 +541,7 @@ ACCESS_CONTROL_CUSTOM="127.0.0.0/8 allow,0.0.0.0/0 deny"
 ```yaml
 services:
   unbound:
-    build: src/unbound
+    build: .
     ports:
       - "53:53/udp"
       - "853:853/tcp"  # DoT server
@@ -559,17 +559,17 @@ services:
 
 ### 💻 Local Development with Docker-gen-dns
 
-For developers using docker-gen-dns or similar tools for local domain resolution:
+For developers using local DNS resolution or similar tools for local domain resolution:
 
 ```yaml
 services:
   unbound:
-    build: src/unbound
+    build: .
     ports:
       - "53:53/udp"
       - "53:53/tcp"
     environment:
-      # Forward *.local domains to docker-gen-dns
+      # Forward *.local domains to local DNS resolution
       - LOCAL_DOMAINS=local:127.0.0.1:5353
       
       # Upstream servers with DoT and custom domains
@@ -579,7 +579,7 @@ services:
       # Allow localhost + Docker containers
       - ACCESS_CONTROL_CUSTOM=127.0.0.0/8 allow,172.16.0.0/12 allow,0.0.0.0/0 deny
       
-      # Must disable to allow internal IPs from docker-gen-dns
+      # Must disable to allow internal IPs from local DNS resolution
       - BLOCK_PRIVATE=false
       
       # Security
@@ -595,7 +595,7 @@ services:
 
 **How this works:**
 
-- `app.local` → forwarded to docker-gen-dns at `127.0.0.1:5353`
+- `app.local` → forwarded to local DNS resolution at `127.0.0.1:5353`
 - `google.com` → forwarded to upstream DNS servers via DoT (1.1.1.1@853#cloudflare-dns.com, 8.8.8.8@853#dns.google)
 - Docker containers can query DNS (172.16.0.0/12 network allowed)
 - External access blocked for security
@@ -617,7 +617,7 @@ environment:
 ```yaml
 services:
   unbound:
-    build: src/unbound
+    build: .
     ports:
       - "53:53/udp"
       - "853:853/tcp"  # DoT server
@@ -659,7 +659,7 @@ services:
 ```yaml
 services:
   unbound:
-    build: src/unbound
+    build: .
     ports:
       - "5353:53/udp"  # Non-privileged port
       - "5353:53/tcp"

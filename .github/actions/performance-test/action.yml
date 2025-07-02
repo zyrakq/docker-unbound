@@ -1,0 +1,51 @@
+name: 'Performance Test'
+description: 'Run performance and load tests on Docker image'
+inputs:
+  image:
+    description: 'Docker image to test'
+    required: true
+  duration:
+    description: 'Test duration (e.g., 60s, 2m)'
+    required: false
+    default: '60s'
+  concurrent-queries:
+    description: 'Number of concurrent queries'
+    required: false
+    default: '10'
+  port:
+    description: 'Port to use for testing'
+    required: false
+    default: '5353'
+outputs:
+  test-result:
+    description: 'Performance test result (success/failure)'
+    value: ${{ steps.perf-test.outputs.result }}
+  avg-response-time:
+    description: 'Average response time in ms'
+    value: ${{ steps.perf-test.outputs.avg-time }}
+  queries-per-second:
+    description: 'Queries per second'
+    value: ${{ steps.perf-test.outputs.qps }}
+  max-memory:
+    description: 'Maximum memory usage in MB'
+    value: ${{ steps.perf-test.outputs.max-memory }}
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Make benchmark script executable
+      shell: bash
+      run: chmod +x ${{ github.action_path }}/benchmark.sh
+
+    - name: Run performance tests
+      id: perf-test
+      shell: bash
+      run: ${{ github.action_path }}/benchmark.sh "${{ inputs.image }}" "${{ inputs.duration }}" "${{ inputs.concurrent-queries }}" "${{ inputs.port }}"
+
+    - name: Upload performance reports as artifacts
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: performance-reports
+        path: performance-reports/
+        retention-days: 30

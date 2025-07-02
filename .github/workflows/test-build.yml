@@ -1,0 +1,112 @@
+name: Test Build
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Test version (e.g., v1.0.0-test, v1.0.0-dev)'
+        required: true
+        type: string
+        default: 'v1.0.0-test'
+      branch:
+        description: 'Branch to build from'
+        required: true
+        default: 'master'
+        type: string
+      run_tests:
+        description: 'Run comprehensive tests'
+        required: true
+        default: true
+        type: boolean
+      run_security_scan:
+        description: 'Run security vulnerability scan'
+        required: true
+        default: true
+        type: boolean
+      run_performance_test:
+        description: 'Run performance tests'
+        required: true
+        default: false
+        type: boolean
+
+env:
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  validate-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.inputs.branch }}
+
+      - name: Validate version format
+        run: |
+          VERSION="${{ github.event.inputs.version }}"
+          if [[ ! $VERSION =~ ^v[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9.-]+)?$ ]]; then
+            echo "❌ Invalid version format: $VERSION"
+            echo "Expected format: v1.0.0-test or v1.0.0-dev"
+            exit 1
+          fi
+          echo "✅ Version format is valid: $VERSION"
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          platforms: linux/amd64
+          push: false
+          load: true
+          tags: ${{ env.IMAGE_NAME }}:${{ github.event.inputs.version }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Verify image build
+        run: |
+          echo "🐳 Built image: ${{ env.IMAGE_NAME }}:${{ github.event.inputs.version }}"
+          echo "📋 Available images:"
+          docker images | grep "${{ env.IMAGE_NAME }}"
+
+      - name: Run comprehensive tests
+        if: github.event.inputs.run_tests == 'true'
+        uses: ./.github/actions/test-docker
+        with:
+          image: ${{ env.IMAGE_NAME }}:${{ github.event.inputs.version }}
+          port: '5353'
+          timeout: '30'
+
+      - name: Run security scan
+        if: github.event.inputs.run_security_scan == 'true'
+        uses: ./.github/actions/security-scan
+        with:
+          image: ${{ env.IMAGE_NAME }}:${{ github.event.inputs.version }}
+          format: 'table'
+          severity: 'MEDIUM'
+          upload-sarif: 'false'
+
+      - name: Run performance tests
+        if: github.event.inputs.run_performance_test == 'true'
+        uses: ./.github/actions/performance-test
+        with:
+          image: ${{ env.IMAGE_NAME }}:${{ github.event.inputs.version }}
+          duration: '60s'
+          concurrent-queries: '10'
+          port: '5353'
+
+      - name: Test summary
+        if: always()
+        run: |
+          echo "🎉 Test build completed!"
+          echo "📦 Image: ${{ env.IMAGE_NAME }}:${{ github.event.inputs.version }}"
+          echo "🏗️ Platform: linux/amd64"
+          echo "📋 Tests run:"
+          echo "  - Comprehensive tests: ${{ github.event.inputs.run_tests == 'true' && '✅' || '⏭️ Skipped' }}"
+          echo "  - Security scan: ${{ github.event.inputs.run_security_scan == 'true' && '✅' || '⏭️ Skipped' }}"
+          echo "  - Performance tests: ${{ github.event.inputs.run_performance_test == 'true' && '✅' || '⏭️ Skipped' }}"
+          echo ""
+          echo "💡 This was a test build - no images were published to registry."
+          echo "💡 To publish and create a release, use the 'Release' workflow."

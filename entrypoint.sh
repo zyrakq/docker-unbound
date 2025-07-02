@@ -101,7 +101,7 @@ export LOCAL_DOMAINS_CONFIG
 # Configure DoT server interface (port 853)
 if [ "${ENABLE_DOT_SERVER:-false}" = "true" ]; then
     # Add interface for DoT server
-    export DOT_INTERFACE="interface: ${INTERFACE:-0.0.0.0}@853"
+    export DOT_INTERFACE="interface: ${INTERFACE:-0.0.0.0}@${TLS_PORT:-853}"
     
     # Configure TLS certificates
     CERT_DIR="/etc/unbound/tls"
@@ -230,7 +230,7 @@ for server in $UPSTREAM_LIST; do
             dot_port="$server_port"
         else
             # Use default DoT port
-            dot_port="853"
+            dot_port="${TLS_PORT:-853}"
         fi
         
         if [ -n "$server_domain" ]; then
@@ -265,11 +265,11 @@ for server in $UPSTREAM_LIST; do
         fi
     else
         # Plain DNS upstream - ignore DoT ports and domains
-        if [ -n "$server_port" ] && [ "$server_port" != "853" ]; then
+        if [ -n "$server_port" ] && [ "$server_port" != "${TLS_PORT:-853}" ]; then
             # Use custom port only if it's not the default DoT port
             dns_port="$server_port"
         else
-            # Use default DNS port (53) - ignore DoT port 853
+            # Use default DNS port (53) - ignore DoT port ${TLS_PORT:-853}
             dns_port="53"
         fi
         
