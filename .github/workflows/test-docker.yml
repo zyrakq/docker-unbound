@@ -1,0 +1,106 @@
+name: Test Published Image
+
+on:
+  workflow_dispatch:
+    inputs:
+      image_tag:
+        description: 'Docker image tag to test (WITHOUT v prefix: 1.0.0, latest, 1)'
+        required: true
+        default: 'latest'
+        type: string
+      test_platforms:
+        description: 'Test on multiple platforms'
+        required: true
+        default: false
+        type: boolean
+      run_security_scan:
+        description: 'Run security vulnerability scan'
+        required: true
+        default: true
+        type: boolean
+      run_performance_test:
+        description: 'Run performance tests'
+        required: true
+        default: false
+        type: boolean
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  test-published:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        platform: ${{ github.event.inputs.test_platforms == 'true' && fromJson('["linux/amd64", "linux/arm64"]') || fromJson('["linux/amd64"]') }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up QEMU
+        if: matrix.platform == 'linux/arm64'
+        uses: docker/setup-qemu-action@v3
+
+      - name: Test published image
+        uses: ./.github/actions/test-docker
+        with:
+          image: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.event.inputs.image_tag }}
+          port: '5353'
+          timeout: '30'
+
+  security-scan:
+    runs-on: ubuntu-latest
+    if: github.event.inputs.run_security_scan == 'true'
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Run security scan
+        uses: ./.github/actions/security-scan
+        with:
+          image: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.event.inputs.image_tag }}
+          format: 'table'
+          severity: 'MEDIUM'
+          upload-sarif: 'true'
+
+  performance-test:
+    runs-on: ubuntu-latest
+    if: github.event.inputs.run_performance_test == 'true'
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Run performance tests
+        uses: ./.github/actions/performance-test
+        with:
+          image: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.event.inputs.image_tag }}
+          duration: '120s'
+          concurrent-queries: '20'
+          port: '5353'
+
+  test-summary:
+    runs-on: ubuntu-latest
+    needs: [test-published, security-scan, performance-test]
+    if: always()
+    steps:
+      - name: Test Summary
+        run: |
+          echo "## 🧪 Test Results Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Image:** \`${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.event.inputs.image_tag }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Test Type | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|-----------|--------|" >> $GITHUB_STEP_SUMMARY
+          echo "| 🐳 Docker Tests | ${{ needs.test-published.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| 🔒 Security Scan | ${{ needs.security-scan.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| ⚡ Performance Test | ${{ needs.performance-test.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          if [ "${{ needs.test-published.result }}" = "success" ] && \
+             [ "${{ needs.security-scan.result }}" != "failure" ] && \
+             [ "${{ needs.performance-test.result }}" != "failure" ]; then
+            echo "✅ **Overall Result: PASSED**" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "❌ **Overall Result: FAILED**" >> $GITHUB_STEP_SUMMARY
+          fi

@@ -1,0 +1,33 @@
+name: 'Test Docker Image'
+description: 'Run comprehensive tests on Docker image'
+inputs:
+  image:
+    description: 'Docker image to test'
+    required: true
+  port:
+    description: 'Port to use for testing'
+    required: false
+    default: '5353'
+  timeout:
+    description: 'Timeout for tests in seconds'
+    required: false
+    default: '30'
+outputs:
+  test-result:
+    description: 'Test result (success/failure)'
+    value: ${{ steps.run-tests.outputs.result }}
+  memory-usage:
+    description: 'Memory usage in MB'
+    value: ${{ steps.run-tests.outputs.memory }}
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Make test script executable
+      shell: bash
+      run: chmod +x ${{ github.action_path }}/test.sh
+
+    - name: Run Docker tests
+      id: run-tests
+      shell: bash
+      run: ${{ github.action_path }}/test.sh "${{ inputs.image }}" "${{ inputs.port }}" "${{ inputs.timeout }}"

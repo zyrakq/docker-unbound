@@ -195,7 +195,7 @@ The container can act as a DoT server, providing secure DNS resolution over TLS 
 ```yaml
 services:
   unbound:
-    build: src/unbound
+    build: .
     ports:
       - "53:53/udp"
       - "853:853/tcp"  # DoT server port
@@ -345,7 +345,7 @@ sudo update-ca-trust
 ```yaml
 services:
   unbound:
-    build: src/unbound
+    build: .
     ports:
       - "53:53/udp"
       - "853:853/tcp"
@@ -541,7 +541,7 @@ ACCESS_CONTROL_CUSTOM="127.0.0.0/8 allow,0.0.0.0/0 deny"
 ```yaml
 services:
   unbound:
-    build: src/unbound
+    build: .
     ports:
       - "53:53/udp"
       - "853:853/tcp"  # DoT server
@@ -559,17 +559,17 @@ services:
 
 ### 💻 Local Development with Docker-gen-dns
 
-For developers using docker-gen-dns or similar tools for local domain resolution:
+For developers using local DNS resolution or similar tools for local domain resolution:
 
 ```yaml
 services:
   unbound:
-    build: src/unbound
+    build: .
     ports:
       - "53:53/udp"
       - "53:53/tcp"
     environment:
-      # Forward *.local domains to docker-gen-dns
+      # Forward *.local domains to local DNS resolution
       - LOCAL_DOMAINS=local:127.0.0.1:5353
       
       # Upstream servers with DoT and custom domains
@@ -579,7 +579,7 @@ services:
       # Allow localhost + Docker containers
       - ACCESS_CONTROL_CUSTOM=127.0.0.0/8 allow,172.16.0.0/12 allow,0.0.0.0/0 deny
       
-      # Must disable to allow internal IPs from docker-gen-dns
+      # Must disable to allow internal IPs from local DNS resolution
       - BLOCK_PRIVATE=false
       
       # Security
@@ -595,7 +595,7 @@ services:
 
 **How this works:**
 
-- `app.local` → forwarded to docker-gen-dns at `127.0.0.1:5353`
+- `app.local` → forwarded to local DNS resolution at `127.0.0.1:5353`
 - `google.com` → forwarded to upstream DNS servers via DoT (1.1.1.1@853#cloudflare-dns.com, 8.8.8.8@853#dns.google)
 - Docker containers can query DNS (172.16.0.0/12 network allowed)
 - External access blocked for security
@@ -617,7 +617,7 @@ environment:
 ```yaml
 services:
   unbound:
-    build: src/unbound
+    build: .
     ports:
       - "53:53/udp"
       - "853:853/tcp"  # DoT server
@@ -659,7 +659,7 @@ services:
 ```yaml
 services:
   unbound:
-    build: src/unbound
+    build: .
     ports:
       - "5353:53/udp"  # Non-privileged port
       - "5353:53/tcp"
@@ -789,34 +789,34 @@ resolvectl query google.com
 
 This project is dual-licensed under either of:
 
-- **Apache License, Version 2.0** ([LICENSE-APACHE](LICENSE-APACHE) or <http://www.apache.org/licenses/LICENSE-2.0>)
-- **MIT License** ([LICENSE-MIT](LICENSE-MIT) or <http://opensource.org/licenses/MIT>)
+- 🔓 **Apache License, Version 2.0** ([LICENSE-APACHE](LICENSE-APACHE) or <http://www.apache.org/licenses/LICENSE-2.0>)
+- 🔓 **MIT License** ([LICENSE-MIT](LICENSE-MIT) or <http://opensource.org/licenses/MIT>)
 
 at your option.
 
-### Third-Party Components
+### 📦 Third-Party Components
 
 This project includes and is based on the following third-party software:
 
-#### Unbound DNS Server
+#### 🌐 Unbound DNS Server
 
 - **Copyright**: Copyright (c) NLnet Labs. All rights reserved.
 - **License**: BSD 3-Clause "New" or "Revised" License
 - **Source**: <https://github.com/NLnetLabs/unbound>
 - **Description**: High-performance DNS resolver
 
-#### Alpine Linux
+#### 🏔️ Alpine Linux
 
 - **Copyright**: Copyright (c) Alpine Linux Development Team
 - **License**: MIT License
 - **Source**: <https://alpinelinux.org/>
 - **Description**: Security-oriented, lightweight Linux distribution
 
-### License Compliance
+### ⚖️ License Compliance
 
 The configuration files, scripts, and documentation in this repository are original works licensed under Apache 2.0 OR MIT. The underlying Unbound software and Alpine Linux base image retain their respective licenses (BSD 3-Clause and MIT).
 
-### BSD 3-Clause License Notice
+### 📋 BSD 3-Clause License Notice
 
 Redistribution and use of Unbound in source and binary forms, with or without modification, are permitted provided that the following conditions are met:
 
@@ -824,6 +824,6 @@ Redistribution and use of Unbound in source and binary forms, with or without mo
 2. Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following disclaimer in the documentation and/or other materials provided with the distribution.
 3. Neither the name of the copyright holder nor the names of its contributors may be used to endorse or promote products derived from this software without specific prior written permission.
 
-### Contribution
+### 🤝 Contribution
 
 Unless you explicitly state otherwise, any contribution intentionally submitted for inclusion in this project by you, as defined in the Apache-2.0 license, shall be dual licensed as above, without any additional terms or conditions.

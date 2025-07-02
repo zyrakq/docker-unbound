@@ -1,0 +1,52 @@
+name: 'Security Scan'
+description: 'Run security vulnerability scan on Docker image'
+inputs:
+  image:
+    description: 'Docker image to scan'
+    required: true
+  format:
+    description: 'Output format (table, json, sarif)'
+    required: false
+    default: 'table'
+  severity:
+    description: 'Minimum severity level (UNKNOWN,LOW,MEDIUM,HIGH,CRITICAL)'
+    required: false
+    default: 'MEDIUM'
+  upload-sarif:
+    description: 'Upload SARIF results to GitHub Security'
+    required: false
+    default: 'true'
+outputs:
+  scan-result:
+    description: 'Scan result (success/failure)'
+    value: ${{ steps.trivy-scan.outputs.scan-result }}
+  vulnerabilities-count:
+    description: 'Number of vulnerabilities found'
+    value: ${{ steps.trivy-scan.outputs.vulnerabilities-count }}
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Make scan script executable
+      shell: bash
+      run: chmod +x ${{ github.action_path }}/scan.sh
+
+    - name: Run security scan
+      id: trivy-scan
+      shell: bash
+      run: ${{ github.action_path }}/scan.sh "${{ inputs.image }}" "${{ inputs.format }}" "${{ inputs.severity }}" "${{ inputs.upload-sarif }}"
+
+    - name: Upload SARIF results to GitHub Security
+      if: inputs.upload-sarif == 'true' && hashFiles('security-reports/trivy-results.sarif') != ''
+      uses: github/codeql-action/upload-sarif@v3
+      with:
+        sarif_file: 'security-reports/trivy-results.sarif'
+      continue-on-error: true
+
+    - name: Upload security reports as artifacts
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: security-reports
+        path: security-reports/
+        retention-days: 30
