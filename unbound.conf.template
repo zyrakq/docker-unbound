@@ -1,0 +1,39 @@
+server:
+    interface: ${INTERFACE}
+    port: ${PORT}
+    ${DOT_INTERFACE}
+    
+    # Access control
+${ACCESS_CONTROL}
+    
+    # Performance settings
+    num-threads: ${NUM_THREADS}
+    msg-buffer-size: ${MSG_BUFFER_SIZE}
+    msg-cache-size: ${MSG_CACHE_SIZE}
+    rrset-cache-size: ${RRSET_CACHE_SIZE}
+    cache-max-ttl: ${CACHE_TTL}
+    
+    # Security settings
+    hide-identity: ${HIDE_IDENTITY}
+    hide-version: ${HIDE_VERSION}
+    ${PRIVATE_ADDRESSES_CONFIG}
+    
+    # Logging configuration
+    ${LOGGING_CONFIG}
+    
+    # Cache configuration
+    ${CACHE_CONFIG}
+    
+    # DNSSEC configuration
+    ${DNSSEC_CONFIG}
+    
+    # TLS configuration
+    ${TLS_CONFIG}
+    
+    # DoT server configuration
+    ${TLS_SERVER_CONFIG}
+
+# Local domains configuration
+${LOCAL_DOMAINS_CONFIG}
+
+${FORWARD_ZONE_CONFIG}
