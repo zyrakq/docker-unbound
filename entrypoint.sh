@@ -1,5 +1,11 @@
 #!/bin/sh
 
+# Configure TLS ports separately for server and upstream
+TLS_SERVER_PORT="${TLS_SERVER_PORT:-853}"
+TLS_UPSTREAM_PORT="${TLS_UPSTREAM_PORT:-853}"
+export TLS_SERVER_PORT
+export TLS_UPSTREAM_PORT
+
 # Configure logging
 if [ "${ENABLE_LOGGING:-false}" = "true" ]; then
     export LOGGING_CONFIG="verbosity: ${LOG_LEVEL:-1}
@@ -101,7 +107,7 @@ export LOCAL_DOMAINS_CONFIG
 # Configure DoT server interface (port 853)
 if [ "${ENABLE_DOT_SERVER:-false}" = "true" ]; then
     # Add interface for DoT server
-    export DOT_INTERFACE="interface: ${INTERFACE:-0.0.0.0}@${TLS_PORT:-853}"
+    export DOT_INTERFACE="interface: ${INTERFACE:-0.0.0.0}@${TLS_SERVER_PORT}"
     
     # Configure TLS certificates
     CERT_DIR="/etc/unbound/tls"
@@ -137,7 +143,7 @@ if [ "${ENABLE_DOT_SERVER:-false}" = "true" ]; then
     
     export TLS_SERVER_CONFIG="tls-service-key: \"$TLS_KEY_PATH\"
     tls-service-pem: \"$TLS_CERT_PATH\"
-    tls-port: ${TLS_PORT:-853}"
+    tls-port: ${TLS_SERVER_PORT}"
 else
     export TLS_SERVER_CONFIG="# DoT server disabled"
     export DOT_INTERFACE="# DoT interface disabled"
@@ -172,9 +178,13 @@ if [ -n "$UPSTREAM_SERVERS" ]; then
     UPSTREAM_LIST="$UPSTREAM_SERVERS"
 fi
 
-# If no servers are configured, use default values
+# If no servers are configured, use default values based on DoT mode
 if [ -z "$UPSTREAM_LIST" ]; then
-    UPSTREAM_LIST="1.1.1.1@853#cloudflare-dns.com 1.0.0.1@853#cloudflare-dns.com 8.8.8.8@853#dns.google 8.8.4.4@853#dns.google"
+    if [ "${ENABLE_DOT:-true}" = "true" ]; then
+        UPSTREAM_LIST="1.1.1.1@${TLS_UPSTREAM_PORT}#cloudflare-dns.com 1.0.0.1@${TLS_UPSTREAM_PORT}#cloudflare-dns.com 8.8.8.8@${TLS_UPSTREAM_PORT}#dns.google 8.8.4.4@${TLS_UPSTREAM_PORT}#dns.google"
+    else
+        UPSTREAM_LIST="1.1.1.1 1.0.0.1 8.8.8.8 8.8.4.4"
+    fi
 fi
 
 # Function to parse server configuration
@@ -230,7 +240,7 @@ for server in $UPSTREAM_LIST; do
             dot_port="$server_port"
         else
             # Use default DoT port
-            dot_port="${TLS_PORT:-853}"
+            dot_port="${TLS_UPSTREAM_PORT}"
         fi
         
         if [ -n "$server_domain" ]; then
@@ -265,11 +275,11 @@ for server in $UPSTREAM_LIST; do
         fi
     else
         # Plain DNS upstream - ignore DoT ports and domains
-        if [ -n "$server_port" ] && [ "$server_port" != "${TLS_PORT:-853}" ]; then
+        if [ -n "$server_port" ] && [ "$server_port" != "${TLS_UPSTREAM_PORT}" ]; then
             # Use custom port only if it's not the default DoT port
             dns_port="$server_port"
         else
-            # Use default DNS port (53) - ignore DoT port ${TLS_PORT:-853}
+            # Use default DNS port (53) - ignore DoT port ${TLS_UPSTREAM_PORT}
             dns_port="53"
         fi
         

@@ -188,7 +188,37 @@ The container can act as a DoT server, providing secure DNS resolution over TLS 
 | `TLS_SERVICE_KEY` | - | Path to external TLS private key file |
 | `TLS_SERVICE_PEM` | - | Path to external TLS certificate file |
 | `TLS_CERT_DOMAIN` | `localhost` | Domain name for auto-generated certificate |
-| `TLS_PORT` | `853` | DoT server port |
+| `TLS_SERVER_PORT` | `853` | DoT server port (port our server listens on) |
+| `TLS_UPSTREAM_PORT` | `853` | DoT upstream port (port for upstream DoT servers) |
+
+#### 🔧 TLS Port Configuration
+
+The container now supports separate port configuration for DoT server and upstream DoT connections:
+
+- **`TLS_SERVER_PORT`**: Port on which our Unbound server listens for DoT requests from clients
+- **`TLS_UPSTREAM_PORT`**: Port used to connect to upstream DoT servers
+
+This separation allows flexible configurations:
+
+```bash
+# Example 1: Different ports for server and upstream
+TLS_SERVER_PORT=8853    # Our server listens on port 8853
+TLS_UPSTREAM_PORT=853   # Connect to upstream servers on standard port 853
+
+# Example 2: Custom upstream port
+TLS_SERVER_PORT=853     # Standard DoT port for our server
+TLS_UPSTREAM_PORT=8853  # Custom upstream DoT port
+
+# Example 3: Both on standard port (default behavior)
+TLS_SERVER_PORT=853
+TLS_UPSTREAM_PORT=853
+```
+
+**Use cases:**
+
+- **Port conflict avoidance**: Run DoT server on non-standard port to avoid conflicts
+- **Corporate environments**: Connect to internal DoT servers on custom ports
+- **Testing**: Use different ports for development and production
 
 #### 🚀 Quick DoT Server Setup
 
