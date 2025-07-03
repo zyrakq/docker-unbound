@@ -3,9 +3,9 @@ FROM alpinelinux/unbound:latest
 # Metadata
 LABEL org.opencontainers.image.title="Unbound DNS Server" \
     org.opencontainers.image.description="🚀 Flexible Unbound DNS server with DoT, DNSSEC support. Auto-published Docker images with comprehensive testing." \
-    org.opencontainers.image.url="https://github.com/zyrakq/unbound" \
-    org.opencontainers.image.source="https://github.com/zyrakq/unbound" \
-    org.opencontainers.image.documentation="https://github.com/zyrakq/unbound#readme" \
+    org.opencontainers.image.url="https://github.com/zyrakq/docker-unbound" \
+    org.opencontainers.image.source="https://github.com/zyrakq/docker-unbound" \
+    org.opencontainers.image.documentation="https://github.com/zyrakq/docker-unbound#readme" \
     org.opencontainers.image.author="Zyrakq <serg.shehov@tutanota.com>" \
     org.opencontainers.image.licenses="Apache-2.0 OR MIT" \
     org.opencontainers.image.vendor="Zyrakq"

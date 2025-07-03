@@ -35,7 +35,7 @@ on:
 
 env:
   REGISTRY: ghcr.io
-  IMAGE_NAME: ${{ github.repository }}
+  IMAGE_NAME: ${{ github.repository_owner }}/unbound
 
 jobs:
   validate-and-prepare:
@@ -213,8 +213,8 @@ jobs:
           body: |
             ## 🐳 Docker Images
             
-            - `ghcr.io/${{ github.repository }}:${{ needs.validate-and-prepare.outputs.docker_tag }}`
-            - `ghcr.io/${{ github.repository }}:latest`
+            - `ghcr.io/${{ env.IMAGE_NAME }}:${{ needs.validate-and-prepare.outputs.docker_tag }}`
+            - `ghcr.io/${{ env.IMAGE_NAME }}:latest`
             
             ## 🏗️ Platforms
             
@@ -228,7 +228,7 @@ jobs:
               --name unbound \
               -p 53:53/udp \
               -p 53:53/tcp \
-              ghcr.io/${{ github.repository }}:${{ needs.validate-and-prepare.outputs.docker_tag }}
+              ghcr.io/${{ env.IMAGE_NAME }}:${{ needs.validate-and-prepare.outputs.docker_tag }}
             ```
             
             ## ⚙️ Configuration
