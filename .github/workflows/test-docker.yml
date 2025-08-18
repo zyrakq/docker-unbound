@@ -36,7 +36,7 @@ jobs:
         platform: ${{ github.event.inputs.test_platforms == 'true' && fromJson('["linux/amd64", "linux/arm64"]') || fromJson('["linux/amd64"]') }}
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Set up QEMU
         if: matrix.platform == 'linux/arm64'
@@ -54,7 +54,7 @@ jobs:
     if: github.event.inputs.run_security_scan == 'true'
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Run security scan
         uses: ./.github/actions/security-scan
@@ -69,7 +69,7 @@ jobs:
     if: github.event.inputs.run_performance_test == 'true'
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Run performance tests
         uses: ./.github/actions/performance-test
